@@ -31,24 +31,24 @@ func (s *SocketServer) Start() error {
 		return err
 	}
 
-	s.listen, err = windows.Socket(windows.AF_INET, windows.SOCK_STREAM, windows.IPPROTO_IP)
-	if err != nil {
-		log.Println(err.Error())
-		return err
-	}
+	// s.listen, err = windows.Socket(windows.AF_INET, windows.SOCK_STREAM, windows.IPPROTO_IP)
+	// if err != nil {
+	// 	log.Println(err.Error())
+	// 	return err
+	// }
 
-	result := &windows.AddrinfoW{}
-	hints := windows.AddrinfoW{
-		Family:   syscall.AF_INET,
-		Socktype: windows.SOCK_STREAM,
-		Protocol: syscall.IPPROTO_IP,
-	}
+	// result := &windows.AddrinfoW{}
+	// hints := windows.AddrinfoW{
+	// 	Family:   syscall.AF_INET,
+	// 	Socktype: windows.SOCK_STREAM,
+	// 	Protocol: syscall.IPPROTO_IP,
+	// }
 
-	err = windows.GetAddrInfoW(syscall.StringToUTF16Ptr("0.0.0.0"), nil, &hints, &result)
-	if nil != err {
-		log.Println(err.Error())
-		return err
-	}
+	// err = windows.GetAddrInfoW(syscall.StringToUTF16Ptr("0.0.0.0"), nil, &hints, &result)
+	// if nil != err {
+	// 	log.Println(err.Error())
+	// 	return err
+	// }
 
 	// ip := net.IPv4zero
 	// addr := [4]byte{}
@@ -56,50 +56,35 @@ func (s *SocketServer) Start() error {
 	// 	addr[i] = ip[i]
 	// }
 
-	err = windows.Bind(s.listen, &windows.SockaddrInet4{
-		Port: 20000,
-		Addr: [4]byte{0, 0, 0, 0},
-	})
-	if err != nil {
-		log.Println(err.Error())
-		return err
-	}
+	// err = windows.Bind(s.listen, &windows.SockaddrInet4{
+	// 	Port: 20000,
+	// 	Addr: [4]byte{0, 0, 0, 0},
+	// })
+	// if err != nil {
+	// 	log.Println(err.Error())
+	// 	return err
+	// }
 
-	err = windows.Listen(s.listen, windows.SOMAXCONN)
-	if err != nil {
-		log.Println(err.Error())
-		return err
-	}
+	// err = windows.Listen(s.listen, windows.SOMAXCONN)
+	// if err != nil {
+	// 	log.Println(err.Error())
+	// 	return err
+	// }
 
-	for {
-		ln, err := net.Listen("tcp", ":20000")
-		if nil != err {
-			log.Println(err.Error())
-			continue
-		}
-		conn, err := ln.Accept()
-
-		handle, _ := getSocketHandle(conn)
-
-		_, err = windows.CreateIoCompletionPort(windows.Handle(handle), s.hIocp, 0, 0)
-		if nil != err {
-			log.Println(err.Error())
-			continue
-		}
-
-		log.Println("Hello", handle)
-	}
+	go s.Accept()
 
 	return nil
 }
 
 func (s *SocketServer) Accept() {
+	log.Println("accpet start")
+	ln, err := net.Listen("tcp", ":20000")
+	if nil != err {
+		log.Println(err.Error())
+		return
+	}
 	for {
-		ln, err := net.Listen("tcp", ":20000")
-		if nil != err {
-			log.Println(err.Error())
-			continue
-		}
+
 		conn, err := ln.Accept()
 
 		handle, _ := getSocketHandle(conn)

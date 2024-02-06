@@ -19,15 +19,15 @@ func main() {
 	ser.Start()
 
 	sigs := make(chan os.Signal, 1)
-	//done := make(chan bool, 1)
+	done := make(chan bool, 1)
 
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	// go func() {
-	// 	sig := <-sigs
-	// 	log.Println(sig)
-	// 	done <- true
-	// }()
+	go func() {
+		sig := <-sigs
+		log.Println(sig)
+		done <- true
+	}()
 
-	// <-done
+	<-done
 }
