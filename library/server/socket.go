@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"syscall"
@@ -36,33 +37,29 @@ func (s *SocketServer) Start() error {
 		return err
 	}
 
-	//ip := []byte{'0', '0', '0', '0'}
-
-	//serviceName := []byte{'0'}
-	//ptr := (*uint16)(unsafe.Pointer(&ip))
-	//servicePtr := (*uint16)(unsafe.Pointer(&serviceName))
 	result := &windows.AddrinfoW{}
 	hints := windows.AddrinfoW{
 		Family:   syscall.AF_INET,
 		Socktype: windows.SOCK_STREAM,
 		Protocol: syscall.IPPROTO_IP,
 	}
+
 	err = windows.GetAddrInfoW(syscall.StringToUTF16Ptr("0.0.0.0"), nil, &hints, &result)
 	if nil != err {
 		log.Println(err.Error())
 		return err
 	}
 
-	ip := net.IPv4zero
-	addr := [4]byte{}
-	for i := 0; i < net.IPv4len; i++ {
-		addr[i] = ip[i]
-	}
+	// ip := net.IPv4zero
+	// addr := [4]byte{}
+	// for i := 0; i < net.IPv4len; i++ {
+	// 	addr[i] = ip[i]
+	// }
+
 	err = windows.Bind(s.listen, &windows.SockaddrInet4{
 		Port: 20000,
-		Addr: addr,
+		Addr: [4]byte{0, 0, 0, 0},
 	})
-
 	if err != nil {
 		log.Println(err.Error())
 		return err
@@ -74,20 +71,66 @@ func (s *SocketServer) Start() error {
 		return err
 	}
 
-	go s.Accept()
+	for {
+		ln, err := net.Listen("tcp", ":20000")
+		if nil != err {
+			log.Println(err.Error())
+			continue
+		}
+		conn, err := ln.Accept()
+
+		handle, _ := getSocketHandle(conn)
+
+		_, err = windows.CreateIoCompletionPort(windows.Handle(handle), s.hIocp, 0, 0)
+		if nil != err {
+			log.Println(err.Error())
+			continue
+		}
+
+		log.Println("Hello", handle)
+	}
 
 	return nil
 }
 
 func (s *SocketServer) Accept() {
 	for {
-		sock, _, err := windows.Accept(s.listen)
-
+		ln, err := net.Listen("tcp", ":20000")
 		if nil != err {
-			log.Println(err)
+			log.Println(err.Error())
+			continue
+		}
+		conn, err := ln.Accept()
+
+		handle, _ := getSocketHandle(conn)
+
+		_, err = windows.CreateIoCompletionPort(windows.Handle(handle), s.hIocp, 0, 0)
+		if nil != err {
+			log.Println(err.Error())
 			continue
 		}
 
-		log.Println("Hello", sock)
+		log.Println("Hello", handle)
 	}
+}
+
+func getSocketHandle(conn net.Conn) (syscall.Handle, error) {
+	// TCPConn 소켓 가져오기
+	tcpConn, ok := conn.(*net.TCPConn)
+	if !ok {
+		return syscall.InvalidHandle, fmt.Errorf("not a TCPConn")
+	}
+
+	// 소켓 핸들 가져오기
+	file, err := tcpConn.File()
+	if err != nil {
+		return syscall.InvalidHandle, err
+	}
+	defer file.Close()
+
+	// 소켓 핸들 얻기
+	fd := file.Fd()
+	connHandle := syscall.Handle(fd)
+
+	return connHandle, nil
 }
