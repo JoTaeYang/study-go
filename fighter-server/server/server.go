@@ -7,3 +7,7 @@ import (
 type FighterServer struct {
 	*lib.SocketServer
 }
+
+func (s *FighterServer) Start() {
+	s.SocketServer.Start()
+}
