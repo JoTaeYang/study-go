@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// 서버에 연결
-	conn, err := net.Dial("tcp", "localhost:20000")
+	conn, err := net.Dial("tcp", ":20000")
 	if err != nil {
 		fmt.Println("Error connecting to server:", err)
 		return

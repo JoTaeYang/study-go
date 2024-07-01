@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"runtime"
 	"syscall"
 
 	"golang.org/x/sys/windows"
@@ -78,16 +79,24 @@ func (s *SocketServer) Start() error {
 
 func (s *SocketServer) Accept() {
 	log.Println("accpet start")
-	ln, err := net.Listen("tcp", ":20000")
+	log.Println(runtime.GOOS)
+	ln, err := net.Listen("tcp", "127.0.0.1:20000")
 	if nil != err {
 		log.Println(err.Error())
 		return
 	}
 	for {
-
 		conn, err := ln.Accept()
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
 
-		handle, _ := getSocketHandle(conn)
+		handle, err := getSocketHandle(conn)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
 
 		_, err = windows.CreateIoCompletionPort(windows.Handle(handle), s.hIocp, 0, 0)
 		if nil != err {
@@ -111,7 +120,6 @@ func getSocketHandle(conn net.Conn) (syscall.Handle, error) {
 	if err != nil {
 		return syscall.InvalidHandle, err
 	}
-	defer file.Close()
 
 	// 소켓 핸들 얻기
 	fd := file.Fd()
