@@ -5,36 +5,45 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/base64"
+	"errors"
+	"flag"
+	"fmt"
 	"log"
-	"net"
 	"net/http"
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
-	"github.com/panjf2000/gnet"
+	"github.com/panjf2000/gnet/v2"
 )
 
 type wsServer struct {
-	*gnet.EventServer
+	*gnet.BuiltinEventEngine
+
+	addr      string
+	multicore bool
+	eng       gnet.Engine
+	connected int64
 }
 
-func (s *wsServer) OnInitComplete(srv gnet.Server) (action gnet.Action) {
-	log.Printf("WebSocket server started on %s\n", srv.Addr.String())
+func (s *wsServer) OnInitComplete(eng gnet.Engine) (action gnet.Action) {
+	s.eng = eng
 	return
 }
 
-func (s *wsServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
+func (s *wsServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	log.Printf("New connection from %s\n", c.RemoteAddr().String())
-	c.SetContext(new(WebSocketConn))
+	wsc := &WebSocketConn{Conn: c}
+	c.SetContext(wsc)
 	return
 }
 
-func (s *wsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
+func (s *wsServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 	wsc := c.Context().(*WebSocketConn)
 
 	if !wsc.Upgraded {
 		// WebSocket 핸드셰이크 처리
-		br := bufio.NewReader(bytes.NewReader(frame))
+		buff, _ := c.Next(-1)
+		br := bufio.NewReader(bytes.NewReader(buff))
 		req, err := http.ReadRequest(br)
 		if err != nil {
 			log.Printf("Failed to read request: %v\n", err)
@@ -64,7 +73,8 @@ func (s *wsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 		buf.WriteString("Sec-WebSocket-Accept: " + acceptKey + "\r\n")
 		buf.WriteString("\r\n")
 
-		out = buf.Bytes()
+		c.Write(buff)
+
 		wsc.Upgraded = true
 
 		return
@@ -82,7 +92,7 @@ func (s *wsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 
 	}
 
-	err = wsutil.WriteServerMessage(wsc.Conn, ws.OpBinary, msg)
+	err = wsutil.WriteServerMessage(wsc, ws.OpBinary, msg)
 	if err != nil {
 		log.Printf("Failed to write WebSocket frame: %v\n", err)
 		action = gnet.Close
@@ -97,16 +107,26 @@ func (s *wsServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 }
 
 type WebSocketConn struct {
-	net.Conn
+	gnet.Conn
 	Upgraded bool
 }
 
 func (wsc *WebSocketConn) Read(b []byte) (n int, err error) {
-	return wsc.Conn.Read(b)
+
+	data, err := wsc.Conn.Next(len(b))
+	n = copy(b, data)
+	if n == 0 {
+		err = errors.New("no data read")
+	}
+	return
 }
 
 func (wsc *WebSocketConn) Write(b []byte) (n int, err error) {
-	return wsc.Conn.Write(b)
+	n, err = wsc.Conn.Write(b)
+	if err != nil {
+		return 0, err
+	}
+	return
 }
 
 func generateAcceptKey(secWebSocketKey string) string {
@@ -117,7 +137,16 @@ func generateAcceptKey(secWebSocketKey string) string {
 }
 
 func main() {
-	ws := &wsServer{}
+
 	// WebSocket 서버 시작
-	log.Fatal(gnet.Serve(ws, "tcp://:30000", gnet.WithMulticore(true)))
+	var port int
+	var multicore bool
+
+	// Example command: go run main.go --port 8080 --multicore=true
+	flag.IntVar(&port, "port", 30000, "server port")
+	flag.BoolVar(&multicore, "multicore", true, "multicore")
+	flag.Parse()
+
+	ws := &wsServer{addr: fmt.Sprintf("tcp://127.0.0.1:%d", port), multicore: multicore}
+	log.Println("server exits:", gnet.Run(ws, ws.addr, gnet.WithMulticore(multicore), gnet.WithReusePort(true), gnet.WithTicker(true)))
 }
