@@ -3,8 +3,12 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/gobwas/ws"
@@ -12,11 +16,24 @@ import (
 )
 
 func main() {
-	// 서버 주소
-	addr := "ws://localhost:30000"
-	ctx := context.Background()
-	// WebSocket 연결 생성
-	conn, _, _, err := ws.DefaultDialer.Dial(ctx, addr)
+	// WebSocket 서버 주소
+	u := url.URL{Scheme: "ws", Host: "localhost:30000", Path: "/"}
+
+	// HTTP 클라이언트를 사용하여 핸드셰이크 요청 생성
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		log.Fatalf("Failed to create request: %v\n", err)
+	}
+
+	// WebSocket 핸드셰이크 헤더 설정
+	req.Header.Set("Upgrade", "websocket")
+	req.Header.Set("Connection", "Upgrade")
+	req.Header.Set("Sec-WebSocket-Version", "13")
+	req.Header.Set("Sec-WebSocket-Key", generateSecWebSocketKey())
+
+	// WebSocket 서버에 연결
+
+	conn, _, _, err := ws.Dial(context.TODO(), req.URL.String())
 	if err != nil {
 		log.Fatalf("Failed to connect to WebSocket server: %v\n", err)
 	}
@@ -49,4 +66,13 @@ func main() {
 
 		fmt.Printf("Received: %s\n", string(msg))
 	}
+}
+
+// Sec-WebSocket-Key 생성
+func generateSecWebSocketKey() string {
+	const magicString = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+	key := "dGhlIHNhbXBsZSBub25jZQ==" // 임의의 Base64 인코딩 문자열
+	hash := sha1.New()
+	hash.Write([]byte(key + magicString))
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
 }

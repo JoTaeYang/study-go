@@ -55,26 +55,18 @@ func (s *wsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 			return
 		}
 
-		resp := http.Response{
-			Status:        "101 Switching Protocols",
-			StatusCode:    http.StatusSwitchingProtocols,
-			Proto:         "HTTP/1.1",
-			ProtoMajor:    1,
-			ProtoMinor:    1,
-			Header:        make(http.Header),
-			ContentLength: -1,
-		}
+		var buf bytes.Buffer
+		buf.WriteString("HTTP/1.1 101 Switching Protocols\r\n")
+		buf.WriteString("Upgrade: websocket\r\n")
+		buf.WriteString("Connection: Upgrade\r\n")
 		key := req.Header.Get("Sec-WebSocket-Key")
 		acceptKey := generateAcceptKey(key)
-		resp.Header.Set("Upgrade", "websocket")
-		resp.Header.Set("Connection", "Upgrade")
-		resp.Header.Set("Sec-WebSocket-Accept", acceptKey)
+		buf.WriteString("Sec-WebSocket-Accept: " + acceptKey + "\r\n")
+		buf.WriteString("\r\n")
 
-		var buf bytes.Buffer
-		resp.Write(&buf)
 		out = buf.Bytes()
-
 		wsc.Upgraded = true
+
 		return
 	}
 
