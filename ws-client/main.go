@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 	"os"
 
@@ -19,21 +18,8 @@ func main() {
 	// WebSocket 서버 주소
 	u := url.URL{Scheme: "ws", Host: "localhost:30000", Path: "/"}
 
-	// HTTP 클라이언트를 사용하여 핸드셰이크 요청 생성
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		log.Fatalf("Failed to create request: %v\n", err)
-	}
-
-	// WebSocket 핸드셰이크 헤더 설정
-	req.Header.Set("Upgrade", "websocket")
-	req.Header.Set("Connection", "Upgrade")
-	req.Header.Set("Sec-WebSocket-Version", "13")
-	req.Header.Set("Sec-WebSocket-Key", generateSecWebSocketKey())
-
 	// WebSocket 서버에 연결
-
-	conn, _, _, err := ws.Dial(context.TODO(), req.URL.String())
+	conn, _, _, err := ws.DefaultDialer.Dial(context.TODO(), u.String())
 	if err != nil {
 		log.Fatalf("Failed to connect to WebSocket server: %v\n", err)
 	}
