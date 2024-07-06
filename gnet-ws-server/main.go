@@ -5,17 +5,39 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/base64"
+	"encoding/binary"
 	"log"
 	"net/http"
 
 	"github.com/gobwas/ws"
-	"github.com/gobwas/ws/wsutil"
 	"github.com/panjf2000/gnet"
 )
 
 type wsServer struct {
 	*gnet.EventServer
 }
+
+const (
+	MaxHeaderSize = 14
+	MinHeaderSize = 2
+)
+
+type OpCode byte
+
+const (
+	bit0 = 0x80
+	bit1 = 0x40
+	bit2 = 0x20
+	bit3 = 0x10
+	bit4 = 0x08
+	bit5 = 0x04
+	bit6 = 0x02
+	bit7 = 0x01
+
+	len7  = int64(125)
+	len16 = int64(^(uint16(0)))
+	len64 = int64(^(uint64(0)) >> 1)
+)
 
 func (s *wsServer) OnInitComplete(srv gnet.Server) (action gnet.Action) {
 	log.Printf("WebSocket server started on %s\n", srv.Addr.String())
@@ -67,24 +89,13 @@ func (s *wsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 		return
 	}
 
-	// WebSocket 메시지를 에코
-	msg, op, err := wsutil.ReadClientData(wsc)
-	if err != nil {
-		log.Printf("Failed to read WebSocket frame: %v\n", err)
-		action = gnet.Close
-		return
+	buf := bytes.NewBuffer(frame)
+	msg := wsc.ReadBytes(buf)
+
+	//보낼 때도 write frame header 를 추가해줘야 한다.
+	if msg != nil {
+		out = msg
 	}
-
-	if op == ws.OpClose {
-
-	}
-
-	err = wsutil.WriteServerMessage(wsc, ws.OpBinary, msg)
-	if err != nil {
-		log.Printf("Failed to write WebSocket frame: %v\n", err)
-		action = gnet.Close
-	}
-
 	return
 }
 
@@ -96,6 +107,8 @@ func (s *wsServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 type WebSocketConn struct {
 	gnet.Conn
 	Upgraded bool
+	readLen  int64
+	header   *ws.Frame
 }
 
 func (wsc *WebSocketConn) Read(b []byte) (n int, err error) {
@@ -106,6 +119,78 @@ func (wsc *WebSocketConn) Read(b []byte) (n int, err error) {
 func (wsc *WebSocketConn) Write(b []byte) (n int, err error) {
 	//wsc.Conn.Write(b)
 	return
+}
+
+func (wsc *WebSocketConn) makeWriteHeader(h ws.Header) []byte {
+	bts := make([]byte, MaxHeaderSize)
+
+	if h.Fin {
+		bts[0] |= bit0
+	}
+	bts[0] |= h.Rsv << 4
+	bts[0] |= byte(h.OpCode)
+
+	var n int
+	switch {
+	case h.Length <= len7:
+		bts[1] = byte(h.Length)
+		n = 2
+
+	case h.Length <= len16:
+		bts[1] = 126
+		binary.BigEndian.PutUint16(bts[2:4], uint16(h.Length))
+		n = 4
+
+	case h.Length <= len64:
+		bts[1] = 127
+		binary.BigEndian.PutUint64(bts[2:10], uint64(h.Length))
+		n = 10
+
+	default:
+		return nil
+	}
+
+	if h.Masked {
+		bts[1] |= bit0
+		n += copy(bts[n:], h.Mask[:])
+	}
+
+	return bts[:n]
+}
+
+func (wsc *WebSocketConn) ReadBytes(buf *bytes.Buffer) []byte {
+
+	if wsc.header == nil {
+		wsc.header = &ws.Frame{Payload: []byte{}}
+	}
+
+	if wsc.header.Header.Length == 0 {
+		wsHeader, err := ws.ReadHeader(buf)
+		if err != nil {
+
+		}
+		wsc.header.Header = wsHeader
+		wsc.header.Payload = wsc.header.Payload[:0]
+		return nil
+	}
+
+	if buf.Len() > 0 {
+		wsc.header.Payload = append(wsc.header.Payload, buf.Bytes()...)
+	}
+
+	if wsc.header.Header.Length != int64(len(wsc.header.Payload)) {
+		return nil
+	}
+
+	fr := ws.UnmaskFrameInPlace(*wsc.header)
+
+	msg := wsc.makeWriteHeader(fr.Header)
+
+	msg = append(msg, fr.Payload...)
+
+	wsc.header.Header.Length = 0
+
+	return msg
 }
 
 func main() {
