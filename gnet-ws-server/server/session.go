@@ -11,7 +11,6 @@ import (
 type WebSocketConn struct {
 	gnet.Conn
 	Upgraded bool
-	readLen  int64
 	header   *ws.Frame
 }
 
@@ -61,7 +60,7 @@ func (wsc *WebSocketConn) ReadBytes(buf *bytes.Buffer) []byte {
 	if wsc.header.Header.Length == 0 {
 		wsHeader, err := ws.ReadHeader(buf)
 		if err != nil {
-
+			// 처리 추가하기
 		}
 		wsc.header.Header = wsHeader
 		wsc.header.Payload = wsc.header.Payload[:0]

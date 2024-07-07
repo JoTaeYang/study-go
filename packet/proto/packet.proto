@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = ".";
+option java_multiple_files = true;
+
+package stgo;
+
+message PacketID {
+    enum T {
+        NONE = 0;
+
+        SC_CONNECT = 1;
+        CS_CONNECT = 2;
+
+        SC_CHAT_USER_MSG = 3;
+        CS_CHAT_USER_MSG = 4;
+    }
+}

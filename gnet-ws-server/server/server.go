@@ -11,7 +11,7 @@ import (
 	"github.com/panjf2000/gnet"
 )
 
-type wsServer struct {
+type WsServer struct {
 	*gnet.EventServer
 }
 
@@ -37,7 +37,7 @@ const (
 	len64 = int64(^(uint64(0)) >> 1)
 )
 
-func (s *wsServer) upgrade(wsc *WebSocketConn, br *bufio.Reader, action *gnet.Action) (out *bytes.Buffer) {
+func (s *WsServer) upgrade(wsc *WebSocketConn, br *bufio.Reader, action *gnet.Action) (out *bytes.Buffer) {
 	req, err := http.ReadRequest(br)
 	if err != nil {
 		log.Printf("Failed to read request: %v\n", err)
@@ -68,19 +68,19 @@ func (s *wsServer) upgrade(wsc *WebSocketConn, br *bufio.Reader, action *gnet.Ac
 	return
 }
 
-func (s *wsServer) OnInitComplete(srv gnet.Server) (action gnet.Action) {
+func (s *WsServer) OnInitComplete(srv gnet.Server) (action gnet.Action) {
 	log.Printf("WebSocket server started on %s\n", srv.Addr.String())
 	return
 }
 
-func (s *wsServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
+func (s *WsServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	log.Printf("New connection from %s\n", c.RemoteAddr().String())
 	wsc := &WebSocketConn{Conn: c}
 	c.SetContext(wsc)
 	return
 }
 
-func (s *wsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
+func (s *WsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
 	wsc := c.Context().(*WebSocketConn)
 
 	//Upgrade Check
@@ -106,7 +106,7 @@ func (s *wsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 	return
 }
 
-func (s *wsServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
+func (s *WsServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	log.Printf("WebSocket connection closed from %s\n", c.RemoteAddr().String())
 	return
 }

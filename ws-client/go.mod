@@ -1,6 +1,6 @@
 module github.com/JoTaeYang/study-go/ws-client
 
-go 1.20
+go 1.22.5
 
 require github.com/gobwas/ws v1.4.0
 

@@ -16,7 +16,7 @@ import (
 
 func main() {
 	// WebSocket 서버 주소
-	u := url.URL{Scheme: "ws", Host: "localhost:30000", Path: "/"}
+	u := url.URL{Scheme: "ws", Host: "localhost:20000", Path: "/"}
 
 	// WebSocket 서버에 연결
 	conn, _, _, err := ws.DefaultDialer.Dial(context.TODO(), u.String())

@@ -1,0 +1,1 @@
+protoc --proto_path=. --proto_path=./proto --go_out=./internal packet.proto
