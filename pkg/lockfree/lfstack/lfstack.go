@@ -2,17 +2,17 @@ package lfstack
 
 import "sync/atomic"
 
-type Node struct {
-	value int
-	next  *Node
+type Node[T any] struct {
+	value T
+	next  *Node[T]
 }
 
-type Stack struct {
-	top atomic.Pointer[Node]
+type Stack[T any] struct {
+	top atomic.Pointer[Node[T]]
 }
 
-func (s *Stack) Push(val int) {
-	newNode := &Node{value: val}
+func (s *Stack[T]) Push(val T) {
+	newNode := &Node[T]{value: val}
 	for {
 		oldTop := s.top.Load()
 		newNode.next = oldTop
@@ -22,11 +22,12 @@ func (s *Stack) Push(val int) {
 	}
 }
 
-func (s *Stack) Pop() (int, bool) {
+func (s *Stack[T]) Pop() (T, bool) {
+	var empty T
 	for {
 		oldTop := s.top.Load()
 		if oldTop == nil {
-			return 0, false
+			return empty, false
 		}
 		newTop := oldTop.next
 		if s.top.CompareAndSwap(oldTop, newTop) {
