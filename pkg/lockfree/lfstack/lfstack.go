@@ -8,7 +8,8 @@ type Node[T any] struct {
 }
 
 type Stack[T any] struct {
-	top atomic.Pointer[Node[T]]
+	top   atomic.Pointer[Node[T]]
+	count atomic.Int32
 }
 
 func (s *Stack[T]) Push(val T) {
@@ -20,6 +21,11 @@ func (s *Stack[T]) Push(val T) {
 			break
 		}
 	}
+	s.count.Add(1)
+}
+
+func (s *Stack[T]) GetCount() int32 {
+	return s.count.Load()
 }
 
 func (s *Stack[T]) Pop() (T, bool) {
@@ -31,7 +37,9 @@ func (s *Stack[T]) Pop() (T, bool) {
 		}
 		newTop := oldTop.next
 		if s.top.CompareAndSwap(oldTop, newTop) {
+			s.count.Add(-1)
 			return oldTop.value, true
 		}
 	}
+
 }

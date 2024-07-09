@@ -2,5 +2,6 @@ go 1.22.5
 
 use (
 	./gnet-ws-server
+	./test
 	./ws-client
 )

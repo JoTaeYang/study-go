@@ -1,9 +1,8 @@
-package lfstack_test
+package main
 
 import (
 	"log"
 	"sync/atomic"
-	"testing"
 	"time"
 
 	"github.com/JoTaeYang/study-go/pkg/lockfree/lfstack"
@@ -93,8 +92,7 @@ func FuncTestRoutine() {
 		}
 	}
 }
-
-func TestLfStack(t *testing.T) {
+func main() {
 	s = &lfstack.Stack[*Player]{}
 
 	pList := make([]*Player, POOL_COUNT, POOL_COUNT)
@@ -115,7 +113,7 @@ func TestLfStack(t *testing.T) {
 	}
 
 	for {
-		time.Sleep(1000)
+		time.Sleep(time.Second)
 		if s.GetCount() > POOL_COUNT {
 			panic("pool count over")
 		}
