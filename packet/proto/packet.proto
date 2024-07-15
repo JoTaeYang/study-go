@@ -14,6 +14,9 @@ message PacketID {
 
         SC_CHAT_USER_MSG = 3;
         CS_CHAT_USER_MSG = 4;
+
+        SC_PING = 5;
+        CS_PONG = 6;
     }
 }
 

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/JoTaeYang/study-go/packet/stgo"
 	"github.com/JoTaeYang/study-go/pkg/lockfree/lfstack"
 	"github.com/panjf2000/gnet"
 )
@@ -18,7 +19,7 @@ type WsServer struct {
 	idx         *lfstack.Stack[int32]
 	sessionList []*WebSocketConn
 
-	msgFroc func()
+	msgFroc func(session *WebSocketConn, h *stgo.PacketHeader) error
 }
 
 const (
@@ -58,7 +59,7 @@ func (s *WsServer) InitServer(poolIdxLength int32) {
 	}
 }
 
-func (s *WsServer) SetMsgProc(proc func()) {
+func (s *WsServer) SetMsgProc(proc func(session *WebSocketConn, h *stgo.PacketHeader) error) {
 	s.msgFroc = proc
 }
 
@@ -145,7 +146,7 @@ func (s *WsServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 
 	wsc.Conn = nil
 	wsc.Upgraded = false
-	wsc.header = nil
+	wsc.h = nil
 
 	s.idx.Push(wsc.idx)
 	return

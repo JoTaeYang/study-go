@@ -14,7 +14,7 @@ func main() {
 	}
 
 	ws.InitServer(1000)
-	ws.SetMsgProc(server.MsgProc)
+	server.InitMsgProc(ws)
 
 	log.Fatal(gnet.Serve(ws, "tcp://:30000", gnet.WithMulticore(true)))
 }

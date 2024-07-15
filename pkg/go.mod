@@ -3,6 +3,7 @@ module github.com/JoTaeYang/study-go/pkg
 go 1.22.5
 
 require (
+	github.com/JoTaeYang/study-go/packet v0.0.0-20240715132117-84eace1d721a
 	github.com/aws/aws-sdk-go-v2/config v1.27.24
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.24
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.34.1
@@ -34,5 +35,6 @@ require (
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
 	golang.org/x/sys v0.6.0 // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )

@@ -12,7 +12,7 @@ import (
 type WebSocketConn struct {
 	gnet.Conn
 	Upgraded bool
-	header   *ws.Frame
+	h        *ws.Frame
 	idx      int32
 }
 
@@ -55,37 +55,40 @@ func (wsc *WebSocketConn) makeWriteHeader(h ws.Header) []byte {
 
 func (wsc *WebSocketConn) ReadBytes(buf *bytes.Buffer) []byte {
 
-	if wsc.header == nil {
-		wsc.header = &ws.Frame{Payload: []byte{}}
+	if wsc.h == nil {
+		wsc.h = &ws.Frame{Payload: []byte{}}
 	}
 
-	if wsc.header.Header.Length == 0 {
+	if wsc.h.Header.Length == 0 {
 		wsHeader, err := ws.ReadHeader(buf)
 		if err != nil {
 			// 처리 추가하기
 		}
-		wsc.header.Header = wsHeader
-		wsc.header.Payload = wsc.header.Payload[:0]
+		wsc.h.Header = wsHeader
+		wsc.h.Payload = wsc.h.Payload[:0]
 		return nil
 	}
 
 	if buf.Len() > 0 {
-		wsc.header.Payload = append(wsc.header.Payload, buf.Bytes()...)
+		wsc.h.Payload = append(wsc.h.Payload, buf.Bytes()...)
 	}
 
-	if wsc.header.Header.Length != int64(len(wsc.header.Payload)) {
+	if wsc.h.Header.Length != int64(len(wsc.h.Payload)) {
 		return nil
 	}
 
-	fr := ws.UnmaskFrameInPlace(*wsc.header)
+	fr := ws.UnmaskFrameInPlace(*wsc.h)
 
 	msg := wsc.makeWriteHeader(fr.Header)
+
+	//ws.NewFrame으로 만들어서 패킷 보내주면 된다.
+	//지금은 에코 서버 만들어서 이런 것.
 
 	log.Println(string(fr.Payload))
 
 	msg = append(msg, fr.Payload...)
 
-	wsc.header.Header.Length = 0
+	wsc.h.Header.Length = 0
 
 	return msg
 }
