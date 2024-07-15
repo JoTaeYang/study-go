@@ -4,7 +4,7 @@
 // 	protoc        v3.17.1
 // source: packet.proto
 
-package __
+package stgo
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -113,6 +113,69 @@ func (*PacketID) Descriptor() ([]byte, []int) {
 	return file_packet_proto_rawDescGZIP(), []int{0}
 }
 
+type PacketHeader struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Code int64 `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"` // 패킷 코드
+	Pid  int32 `protobuf:"varint,2,opt,name=pid,proto3" json:"pid,omitempty"`   // 패킷 타입
+	Size int32 `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"` // 메시지 Length
+}
+
+func (x *PacketHeader) Reset() {
+	*x = PacketHeader{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_packet_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PacketHeader) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PacketHeader) ProtoMessage() {}
+
+func (x *PacketHeader) ProtoReflect() protoreflect.Message {
+	mi := &file_packet_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PacketHeader.ProtoReflect.Descriptor instead.
+func (*PacketHeader) Descriptor() ([]byte, []int) {
+	return file_packet_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PacketHeader) GetCode() int64 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *PacketHeader) GetPid() int32 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+func (x *PacketHeader) GetSize() int32 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
 var File_packet_proto protoreflect.FileDescriptor
 
 var file_packet_proto_rawDesc = []byte{
@@ -123,8 +186,13 @@ var file_packet_proto_rawDesc = []byte{
 	0x0e, 0x0a, 0x0a, 0x43, 0x53, 0x5f, 0x43, 0x4f, 0x4e, 0x4e, 0x45, 0x43, 0x54, 0x10, 0x02, 0x12,
 	0x14, 0x0a, 0x10, 0x53, 0x43, 0x5f, 0x43, 0x48, 0x41, 0x54, 0x5f, 0x55, 0x53, 0x45, 0x52, 0x5f,
 	0x4d, 0x53, 0x47, 0x10, 0x03, 0x12, 0x14, 0x0a, 0x10, 0x43, 0x53, 0x5f, 0x43, 0x48, 0x41, 0x54,
-	0x5f, 0x55, 0x53, 0x45, 0x52, 0x5f, 0x4d, 0x53, 0x47, 0x10, 0x04, 0x42, 0x05, 0x50, 0x01, 0x5a,
-	0x01, 0x2e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x5f, 0x55, 0x53, 0x45, 0x52, 0x5f, 0x4d, 0x53, 0x47, 0x10, 0x04, 0x22, 0x48, 0x0a, 0x0c, 0x50,
+	0x61, 0x63, 0x6b, 0x65, 0x74, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x63,
+	0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x12,
+	0x10, 0x0a, 0x03, 0x70, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x70, 0x69,
+	0x64, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x04, 0x73, 0x69, 0x7a, 0x65, 0x42, 0x0a, 0x50, 0x01, 0x5a, 0x06, 0x2e, 0x2f, 0x73, 0x74, 0x67,
+	0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -140,10 +208,11 @@ func file_packet_proto_rawDescGZIP() []byte {
 }
 
 var file_packet_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_packet_proto_goTypes = []interface{}{
-	(PacketID_T)(0),  // 0: stgo.PacketID.T
-	(*PacketID)(nil), // 1: stgo.PacketID
+	(PacketID_T)(0),      // 0: stgo.PacketID.T
+	(*PacketID)(nil),     // 1: stgo.PacketID
+	(*PacketHeader)(nil), // 2: stgo.PacketHeader
 }
 var file_packet_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -171,6 +240,18 @@ func file_packet_proto_init() {
 				return nil
 			}
 		}
+		file_packet_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PacketHeader); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -178,7 +259,7 @@ func file_packet_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_packet_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

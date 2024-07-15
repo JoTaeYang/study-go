@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = ".";
+option go_package = "./stgo";
 option java_multiple_files = true;
 
 package stgo;
@@ -15,4 +15,10 @@ message PacketID {
         SC_CHAT_USER_MSG = 3;
         CS_CHAT_USER_MSG = 4;
     }
+}
+
+message PacketHeader {
+    int64 code = 1 [json_name = "code"];        // 패킷 코드
+    int32 pid = 2 [json_name = "pid"];          // 패킷 타입
+    int32 size = 3 [json_name = "size"];        // 메시지 Length        
 }

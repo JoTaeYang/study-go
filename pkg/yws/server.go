@@ -8,11 +8,17 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/JoTaeYang/study-go/pkg/lockfree/lfstack"
 	"github.com/panjf2000/gnet"
 )
 
 type WsServer struct {
 	*gnet.EventServer
+
+	idx         *lfstack.Stack[int32]
+	sessionList []*WebSocketConn
+
+	msgFroc func()
 }
 
 const (
@@ -36,6 +42,25 @@ const (
 	len16 = int64(^(uint16(0)))
 	len64 = int64(^(uint64(0)) >> 1)
 )
+
+/*
+서버 세팅
+
+@params poolIdxLength 세션 인덱스 보관 stack 의 사이즈
+*/
+func (s *WsServer) InitServer(poolIdxLength int32) {
+	s.idx = &lfstack.Stack[int32]{}
+	s.sessionList = make([]*WebSocketConn, poolIdxLength)
+	for i := int32(0); i < poolIdxLength; i++ {
+		s.idx.Push(i)
+
+		s.sessionList[i] = &WebSocketConn{}
+	}
+}
+
+func (s *WsServer) SetMsgProc(proc func()) {
+	s.msgFroc = proc
+}
 
 func (s *WsServer) upgrade(wsc *WebSocketConn, br *bufio.Reader, action *gnet.Action) (out *bytes.Buffer) {
 	req, err := http.ReadRequest(br)
@@ -75,7 +100,13 @@ func (s *WsServer) OnInitComplete(srv gnet.Server) (action gnet.Action) {
 
 func (s *WsServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	log.Printf("New connection from %s\n", c.RemoteAddr().String())
-	wsc := &WebSocketConn{Conn: c}
+	idx, check := s.idx.Pop()
+	if !check {
+		return
+	}
+	wsc := s.sessionList[idx]
+	wsc.Conn = c
+	wsc.idx = idx
 	c.SetContext(wsc)
 	return
 }
@@ -99,6 +130,8 @@ func (s *WsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 	buf := bytes.NewBuffer(frame)
 	msg := wsc.ReadBytes(buf)
 
+	//msg proc
+
 	//보낼 때도 write frame header 를 추가해줘야 한다.
 	if msg != nil {
 		out = msg
@@ -107,7 +140,14 @@ func (s *WsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 }
 
 func (s *WsServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
+	wsc := c.Context().(*WebSocketConn)
 	log.Printf("WebSocket connection closed from %s\n", c.RemoteAddr().String())
+
+	wsc.Conn = nil
+	wsc.Upgraded = false
+	wsc.header = nil
+
+	s.idx.Push(wsc.idx)
 	return
 }
 

@@ -3,6 +3,7 @@ module github.com/JoTaeYang/study-go/gnet-ws-server
 go 1.22.5
 
 require (
+	github.com/JoTaeYang/study-go/pkg v0.0.0-20240715122450-023a21f216b4
 	github.com/gobwas/ws v1.4.0
 	github.com/panjf2000/gnet v1.6.7
 )

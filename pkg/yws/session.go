@@ -3,6 +3,7 @@ package yws
 import (
 	"bytes"
 	"encoding/binary"
+	"log"
 
 	"github.com/gobwas/ws"
 	"github.com/panjf2000/gnet"
@@ -12,6 +13,7 @@ type WebSocketConn struct {
 	gnet.Conn
 	Upgraded bool
 	header   *ws.Frame
+	idx      int32
 }
 
 func (wsc *WebSocketConn) makeWriteHeader(h ws.Header) []byte {
@@ -78,6 +80,8 @@ func (wsc *WebSocketConn) ReadBytes(buf *bytes.Buffer) []byte {
 	fr := ws.UnmaskFrameInPlace(*wsc.header)
 
 	msg := wsc.makeWriteHeader(fr.Header)
+
+	log.Println(string(fr.Payload))
 
 	msg = append(msg, fr.Payload...)
 
