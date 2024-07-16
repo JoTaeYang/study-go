@@ -9,6 +9,12 @@ import (
 )
 
 func main() {
+	var err error
+	err = InitConfig()
+	if err != nil {
+		return
+	}
+
 	ws := &server.GnetWsServer{
 		&yws.WsServer{},
 	}
