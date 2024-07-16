@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/JoTaeYang/study-go/packet/stgo"
 	"github.com/JoTaeYang/study-go/pkg/lockfree/lfstack"
 	"github.com/panjf2000/gnet"
 )
@@ -19,7 +18,7 @@ type WsServer struct {
 	idx         *lfstack.Stack[int32]
 	sessionList []*WebSocketConn
 
-	msgFroc func(session *WebSocketConn, h *stgo.PacketHeader) error
+	msgFroc func(session *WebSocketConn, msg []byte) error
 }
 
 const (
@@ -59,7 +58,7 @@ func (s *WsServer) InitServer(poolIdxLength int32) {
 	}
 }
 
-func (s *WsServer) SetMsgProc(proc func(session *WebSocketConn, h *stgo.PacketHeader) error) {
+func (s *WsServer) SetMsgProc(proc func(session *WebSocketConn, msg []byte) error) {
 	s.msgFroc = proc
 }
 
@@ -131,6 +130,7 @@ func (s *WsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 	buf := bytes.NewBuffer(frame)
 	msg := wsc.ReadBytes(buf)
 
+	s.msgFroc(wsc, msg)
 	//msg proc
 
 	//보낼 때도 write frame header 를 추가해줘야 한다.

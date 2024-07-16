@@ -6,7 +6,7 @@ type PongAPI struct {
 	baseAPI
 }
 
-func Pong(session *yws.WebSocketConn) error {
+func Pong(session *yws.WebSocketConn, payload *[]byte) error {
 
 	return nil
 }
