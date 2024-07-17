@@ -3,7 +3,6 @@ package yws
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
 
 	"github.com/gobwas/ws"
 	"github.com/panjf2000/gnet"
@@ -79,16 +78,10 @@ func (wsc *WebSocketConn) ReadBytes(buf *bytes.Buffer) []byte {
 
 	fr := ws.UnmaskFrameInPlace(*wsc.h)
 
-	msg := wsc.makeWriteHeader(fr.Header)
+	//msg := wsc.makeWriteHeader(fr.Header)
 
 	//ws.NewFrame으로 만들어서 패킷 보내주면 된다.
 	//지금은 에코 서버 만들어서 이런 것.
-
-	log.Println(string(fr.Payload))
-
-	msg = append(msg, fr.Payload...)
-
 	wsc.h.Header.Length = 0
-
-	return msg
+	return fr.Payload
 }

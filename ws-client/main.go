@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"encoding/base64"
@@ -10,6 +11,9 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/JoTaeYang/study-go/packet"
+	"github.com/JoTaeYang/study-go/packet/stgo"
+	"github.com/JoTaeYang/study-go/pkg/convert"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 )
@@ -33,8 +37,19 @@ func main() {
 		fmt.Print("Enter message: ")
 		text, _ := reader.ReadString('\n')
 
+		header := stgo.PacketHeader{
+			Pid:  int32(stgo.PacketID_CS_ECHO),
+			Size: int32(len(text)),
+		}
+
+		buffer := bytes.Buffer{}
+
+		packet.HeaderToByte(&header, &buffer)
+
+		buffer.Write(convert.StringToBytes(text))
+
 		// 메시지 전송
-		err = wsutil.WriteClientText(conn, []byte(text))
+		err = wsutil.WriteClientText(conn, buffer.Bytes())
 		if err != nil {
 			log.Fatalf("Failed to send message: %v\n", err)
 		}

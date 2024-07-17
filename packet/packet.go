@@ -23,7 +23,8 @@ func ByteToHeader(buffer *[]byte, header *stgo.PacketHeader) error {
 
 func HeaderToByte(header *stgo.PacketHeader, buffer *bytes.Buffer) int {
 	prev := buffer.Len()
-	binary.Write(buffer, binary.LittleEndian, 0x89)
+
+	binary.Write(buffer, binary.LittleEndian, uint64(0x89))
 	binary.Write(buffer, binary.LittleEndian, header.Pid)
 	binary.Write(buffer, binary.LittleEndian, header.Size)
 	after := buffer.Len()

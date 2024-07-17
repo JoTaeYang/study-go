@@ -17,6 +17,9 @@ message PacketID {
 
         SC_PING = 5;
         CS_PONG = 6;
+
+        SC_ECHO = 1000;
+        CS_ECHO = 1001;
     }
 }
 
