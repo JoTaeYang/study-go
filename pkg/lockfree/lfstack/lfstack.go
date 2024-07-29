@@ -33,17 +33,17 @@ func (s *Stack[T]) Push(val T) {
 
 	tmpUnique := atomic.AddInt64(&s.top.Load().unique, 1)
 
-	var newTop TopNode[T]
+	//var newTop TopNode[T]
 	for {
 		tmpTop = s.top.Load()
 
-		newTop = TopNode[T]{
+		newTop := &TopNode[T]{
 			next:   newNode,
 			unique: tmpUnique,
 		}
 
 		newNode.next = tmpTop.next
-		if s.top.CompareAndSwap(tmpTop, &newTop) {
+		if s.top.CompareAndSwap(tmpTop, newTop) {
 			break
 		}
 	}
@@ -70,19 +70,19 @@ func (s *Stack[T]) Pop() (T, bool) {
 		return empty, false
 	}
 	var oldTop *TopNode[T]
-	var newTop TopNode[T]
+	//var newTop TopNode[T]
 	for {
 		oldTop = s.top.Load()
 		if oldTop.next == nil {
 			return empty, false
 		}
 
-		newTop = TopNode[T]{
-			next:   oldTop.next,
+		newTop := &TopNode[T]{
+			next:   oldTop.next.next,
 			unique: tmpUnique,
 		}
 
-		if s.top.CompareAndSwap(oldTop, &newTop) {
+		if s.top.CompareAndSwap(oldTop, newTop) {
 			return oldTop.next.value, true
 		}
 	}
