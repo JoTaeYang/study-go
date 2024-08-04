@@ -1,8 +1,7 @@
 package prof
 
 import (
-	"bytes"
-	"fmt"
+	"encoding/json"
 	"log"
 	"math"
 	"runtime"
@@ -11,10 +10,10 @@ import (
 )
 
 type ProfileData struct {
-	min   int64
-	max   int64
-	total int64
-	count int64
+	Min   int64 `json:"min"`
+	Max   int64 `json:"max"`
+	Total int64 `json:"total"`
+	Count int64 `json:"count"`
 }
 
 type ProfChannelData struct {
@@ -36,23 +35,23 @@ func InitProfile() {
 			case t := <-profChannel:
 				if _, check := record[t.key]; !check {
 					record[t.key] = &ProfileData{
-						min:   math.MaxInt,
-						max:   0,
-						total: 0,
-						count: 0,
+						Min:   math.MaxInt,
+						Max:   0,
+						Total: 0,
+						Count: 0,
 					}
 				}
 				data := record[t.key]
-				if t.value > data.max {
-					data.max = t.value
+				if t.value > data.Max {
+					data.Max = t.value
 				}
 
-				if t.value < data.min {
-					data.min = t.value
+				if t.value < data.Min {
+					data.Min = t.value
 				}
 
-				data.total += t.value
-				data.count++
+				data.Total += t.value
+				data.Count++
 			}
 		}
 	}()
@@ -76,20 +75,26 @@ func Write() func() {
 }
 
 func Read() {
+	jsonData := make(map[string]ProfileData)
 	log.Println(record)
 
-	buf := bytes.Buffer{}
-	buf.Grow(2048)
-	buf.WriteString("\nAPI\t\t MIN\t MAX\t AVG\tCount\n")
 	for k, v := range record {
 		apiSplit := strings.Split(k, "/")
 		apiStr := apiSplit[len(apiSplit)-1]
-		minStr := fmt.Sprintf("  %d ns", v.min/1000)
-		maxStr := fmt.Sprintf("%d ns", v.max/1000)
-		avg := fmt.Sprintf("%d ns", (v.total/v.count)/1000)
-		str := fmt.Sprintf("%s  %s  %s  %s  %d\n", apiStr, minStr, maxStr, avg, v.count)
-		buf.WriteString(str)
+		jsonData[apiStr] = ProfileData{
+			Min:   v.Min / 1000,
+			Max:   v.Max / 1000,
+			Total: (v.Total / v.Count) / 1000,
+			Count: v.Count,
+		}
+		log.Println(jsonData[apiStr])
+
+	}
+	jsonOutput, err := json.MarshalIndent(jsonData, "", "  ")
+	if err != nil {
+		log.Println("Error marshalling to JSON:", err)
+		return
 	}
 
-	log.Println(buf.String())
+	log.Println(string(jsonOutput))
 }
