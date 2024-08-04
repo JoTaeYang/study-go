@@ -18,6 +18,12 @@ message PacketID {
         SC_PING = 5;
         CS_PONG = 6;
 
+        SC_ROOM_CREATE = 7;
+        CS_ROOM_CREATE = 8;
+
+        SC_ROOM_ENTER = 9;
+        CS_ROOM_ENTER = 10;
+
         SC_ECHO = 1000;
         CS_ECHO = 1001;
     }

@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/JoTaeYang/study-go/packet"
+	"github.com/JoTaeYang/study-go/packet/stgo"
 	"github.com/JoTaeYang/study-go/pkg/lockfree/lfstack"
 	"github.com/gobwas/ws"
 	"github.com/panjf2000/gnet"
@@ -19,7 +21,7 @@ type WsServer struct {
 	idx         *lfstack.Stack[int32]
 	sessionList []*WebSocketConn
 
-	msgFroc func(session *WebSocketConn, msg []byte) (*ws.Frame, error)
+	msgFroc func(idx int32, msg []byte) (*ws.Frame, error)
 }
 
 const (
@@ -55,12 +57,26 @@ func (s *WsServer) InitServer(poolIdxLength int32) {
 	for i := int32(0); i < poolIdxLength; i++ {
 		s.idx.Push(i)
 
-		s.sessionList[i] = &WebSocketConn{}
+		s.sessionList[i] = &WebSocketConn{
+			buffer: make([][]byte, 1024),
+		}
 	}
 }
 
-func (s *WsServer) SetMsgProc(proc func(session *WebSocketConn, msg []byte) (*ws.Frame, error)) {
+func (s *WsServer) SetMsgProc(proc func(idx int32, msg []byte) (*ws.Frame, error)) {
 	s.msgFroc = proc
+}
+
+func (s *WsServer) GameGo() {
+	// goroutine stop 처리 추가
+	for {
+		for _, v := range s.sessionList {
+			for i := 0; i < 100; i++ {
+				s.msgFroc(v.idx, v.buffer[i])
+			}
+		}
+	}
+
 }
 
 func (s *WsServer) upgrade(wsc *WebSocketConn, br *bufio.Reader, action *gnet.Action) (out *bytes.Buffer) {
@@ -108,6 +124,9 @@ func (s *WsServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	wsc := s.sessionList[idx]
 	wsc.Conn = c
 	wsc.idx = idx
+	wsc.buffer = wsc.buffer[:0]
+	wsc.bufIdx.Store(0)
+
 	c.SetContext(wsc)
 	return
 }
@@ -133,19 +152,34 @@ func (s *WsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 	msg := wsc.ReadBytes(buf)
 
 	if msg != nil {
-		fr, err := s.msgFroc(wsc, msg)
+		header := &stgo.PacketHeader{}
+
+		err := packet.ByteToHeader(&msg, header)
 		if err != nil {
 			action = gnet.Close
 			return
 		}
 
-		sendBuf := wsc.makeWriteHeader(fr.Header)
-
-		sendBuf = append(sendBuf, fr.Payload...)
-
-		if sendBuf != nil {
-			out = sendBuf
+		bufIdx := wsc.bufIdx.Load()
+		for {
+			if wsc.bufIdx.CompareAndSwap(bufIdx, bufIdx+1) {
+				wsc.buffer[bufIdx] = append(wsc.buffer[bufIdx], msg...)
+			}
 		}
+
+		// fr, err := s.msgFroc(wsc, msg)
+		// if err != nil {
+		// 	action = gnet.Close
+		// 	return
+		// }
+
+		// sendBuf := wsc.makeWriteHeader(fr.Header)
+
+		// sendBuf = append(sendBuf, fr.Payload...)
+
+		// if sendBuf != nil {
+		// 	out = sendBuf
+		// }
 	}
 	return
 }

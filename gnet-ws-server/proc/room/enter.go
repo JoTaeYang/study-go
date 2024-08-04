@@ -1,14 +1,15 @@
-package proc
+package room
 
 import (
 	"bytes"
 
 	"github.com/JoTaeYang/study-go/packet"
 	"github.com/JoTaeYang/study-go/packet/stgo"
+	"github.com/JoTaeYang/study-go/pkg/yws"
 	"github.com/gobwas/ws"
 )
 
-func Echo(idx int32, payload *[]byte) (fr *ws.Frame, err error) {
+func Enter(session *yws.WebSocketConn, payload *[]byte) (fr *ws.Frame, err error) {
 	payloadLen := len(*payload)
 	buffer := bytes.Buffer{}
 	buffer.Grow(16 + payloadLen)

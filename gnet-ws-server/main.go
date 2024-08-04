@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/JoTaeYang/study-go/gnet-ws-server/proc"
 	"github.com/JoTaeYang/study-go/gnet-ws-server/server"
 	"github.com/JoTaeYang/study-go/pkg/yws"
 	"github.com/panjf2000/gnet"
@@ -20,7 +21,7 @@ func main() {
 	}
 
 	ws.InitServer(1000)
-	server.InitMsgProc(ws)
+	proc.InitMsgProc(ws)
 
-	log.Fatal(gnet.Serve(ws, "tcp://:30000", gnet.WithMulticore(true)))
+	log.Fatal(gnet.Serve(ws, "tcp://:30000", gnet.WithMulticore(true), gnet.WithNumEventLoop(4)))
 }

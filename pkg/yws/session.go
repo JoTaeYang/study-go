@@ -3,6 +3,7 @@ package yws
 import (
 	"bytes"
 	"encoding/binary"
+	"sync/atomic"
 
 	"github.com/gobwas/ws"
 	"github.com/panjf2000/gnet"
@@ -13,6 +14,8 @@ type WebSocketConn struct {
 	Upgraded bool
 	h        *ws.Frame
 	idx      int32
+	buffer   [][]byte
+	bufIdx   atomic.Int32
 }
 
 func (wsc *WebSocketConn) makeWriteHeader(h ws.Header) []byte {

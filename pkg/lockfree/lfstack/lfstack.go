@@ -13,8 +13,9 @@ type TopNode[T any] struct {
 }
 
 type Stack[T any] struct {
-	top   atomic.Pointer[TopNode[T]] //nil이 되지 않는다.
-	count atomic.Int32
+	top    atomic.Pointer[TopNode[T]] //nil이 되지 않는다.
+	unique atomic.Int64
+	count  atomic.Int32
 }
 
 func NewStack[T any]() *Stack[T] {
@@ -31,7 +32,7 @@ func (s *Stack[T]) Push(val T) {
 
 	var tmpTop *TopNode[T]
 
-	tmpUnique := atomic.AddInt64(&s.top.Load().unique, 1)
+	tmpUnique := s.unique.Add(1)
 
 	//var newTop TopNode[T]
 	for {
@@ -65,10 +66,11 @@ func (s *Stack[T]) CountDecrement() bool {
 func (s *Stack[T]) Pop() (T, bool) {
 	var empty T
 
-	tmpUnique := atomic.AddInt64(&s.top.Load().unique, 1)
+	tmpUnique := s.unique.Add(1)
 	if !s.CountDecrement() {
 		return empty, false
 	}
+
 	var oldTop *TopNode[T]
 	//var newTop TopNode[T]
 	for {

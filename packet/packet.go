@@ -16,6 +16,13 @@ func ByteToHeader(buffer *[]byte, header *stgo.PacketHeader) error {
 	msgBuf := bytes.NewBuffer(*buffer)
 
 	binary.Read(msgBuf, binary.LittleEndian, &header.Code)
+	if header.Code != 0x89 {
+		return errors.New("not equal code")
+	}
+
+	if msgBuf.Len() < 8 {
+		return errors.New("length is less copy")
+	}
 	binary.Read(msgBuf, binary.LittleEndian, &header.Pid)
 	binary.Read(msgBuf, binary.LittleEndian, &header.Size)
 	return nil
