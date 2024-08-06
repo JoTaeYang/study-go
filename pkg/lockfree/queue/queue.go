@@ -24,24 +24,24 @@ type Queue[T any] struct {
 
 func NewQueue[T any]() *Queue[T] {
 	q := Queue[T]{}
-	dummyNode := Node[T]{
+	dummyNode := &Node[T]{
 		next: nil,
 	}
 
-	head := TopNode[T]{
-		node:   &dummyNode,
-		unique: 0,
-	}
+	// head :=
 
-	tail := TopNode[T]{
-		node:   head.node,
-		unique: 0,
-	}
+	// tail :=
 
 	q.count.Store(0)
 	q.unique.Store(0)
-	q.head.Store(&head)
-	q.tail.Store(&tail)
+	q.head.Store(&TopNode[T]{
+		node:   dummyNode,
+		unique: 0,
+	})
+	q.tail.Store(&TopNode[T]{
+		node:   q.head.Load().node,
+		unique: 0,
+	})
 
 	return &q
 }
@@ -56,21 +56,25 @@ func (q *Queue[T]) Enqueue(val T) {
 
 		if tmpTail.node.next == nil {
 			if atomic.CompareAndSwapPointer(
-				(*unsafe.Pointer)(unsafe.Pointer(tmpTail.node.next)),
+				(*unsafe.Pointer)(unsafe.Pointer(&tmpTail.node.next)),
 				nil,
 				unsafe.Pointer(newNode)) {
-				if q.tail.CompareAndSwap(tmpTail, &TopNode[T]{
+
+				newTopNode := &TopNode[T]{
 					node:   tmpTail.node.next,
 					unique: tmpUnique,
-				}) {
+				}
+
+				if q.tail.CompareAndSwap(tmpTail, newTopNode) {
 					break
 				}
 			}
 		} else {
-			q.tail.CompareAndSwap(tmpTail, &TopNode[T]{
+			newTopN := &TopNode[T]{
 				node:   tmpTail.node.next,
 				unique: tmpUnique,
-			})
+			}
+			q.tail.CompareAndSwap(tmpTail, newTopN)
 		}
 	}
 	q.count.Add(1)
