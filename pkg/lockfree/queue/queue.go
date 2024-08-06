@@ -58,7 +58,7 @@ func (q *Queue[T]) Enqueue(val T) {
 			if atomic.CompareAndSwapPointer(
 				(*unsafe.Pointer)(unsafe.Pointer(&tmpTail.node.next)),
 				nil,
-				unsafe.Pointer(newNode)) {
+				unsafe.Pointer(&newNode)) {
 
 				newTopNode := &TopNode[T]{
 					node:   tmpTail.node.next,
@@ -101,7 +101,7 @@ func (q *Queue[T]) Dequeue(val *T) {
 					node:   tmpHead.node.next,
 					unique: tmpUnique,
 				}) {
-
+					break
 				}
 			}
 		} else {
