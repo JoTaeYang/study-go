@@ -95,7 +95,8 @@ func (q *Queue[T]) Dequeue(val *T) {
 		tmpHead = q.head.Load()
 		if tmpTail.node.next == nil {
 			if tmpHead.node.next != nil {
-				val = &tmpHead.node.value
+				이거 값이 좀 잘못들어가는 거 같은데 다시 파악해보기
+				val = &tmpHead.node.next.value
 
 				if q.head.CompareAndSwap(tmpHead, &TopNode[T]{
 					node:   tmpHead.node.next,
