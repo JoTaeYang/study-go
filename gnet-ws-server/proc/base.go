@@ -31,7 +31,7 @@ func InitMsgProc(server *server.GnetWsServer) {
 		case int32(stgo.PacketID_CS_ECHO):
 			fr, err = Echo(idx, &payload)
 		}
-
+		server.SendPacket(idx, fr)
 		return
 	})
 }

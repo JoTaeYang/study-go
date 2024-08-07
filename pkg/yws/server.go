@@ -62,12 +62,41 @@ func (s *WsServer) InitServer(poolIdxLength int32) {
 		s.sessionList[i] = &WebSocketConn{
 			mode:          MODE_NONE,
 			completeRecvQ: queue.NewQueue[[]byte](),
+			sendQ:         queue.NewQueue[*ws.Frame](),
 		}
 	}
 }
 
 func (s *WsServer) SetMsgProc(proc func(idx int32, msg []byte) (*ws.Frame, error)) {
 	s.msgFroc = proc
+}
+
+func (s *WsServer) SendGo() {
+	for {
+		for _, v := range s.sessionList {
+			if v.mode == MODE_GAME {
+				loopCnt := v.sendQ.GetCount()
+				if loopCnt > 0 {
+					if loopCnt > 200 {
+						loopCnt = 100
+					}
+
+					msgBuf := make([]byte, 1024)
+					for i := int32(0); i < loopCnt; i++ {
+						msg := &ws.Frame{}
+						v.sendQ.Dequeue(&msg)
+						sendBuf := v.makeWriteHeader(msg.Header)
+
+						sendBuf = append(sendBuf, msg.Payload...)
+
+						msgBuf = append(msgBuf, sendBuf...)
+					}
+					v.AsyncWrite(msgBuf)
+				}
+			}
+		}
+		time.Sleep(time.Microsecond * 5)
+	}
 }
 
 func (s *WsServer) GameGo() {
@@ -137,7 +166,6 @@ func (s *WsServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	wsc := s.sessionList[idx]
 	wsc.Conn = c
 	wsc.idx = idx
-	wsc.completeRecvQ = queue.NewQueue[[]byte]()
 	wsc.mode = MODE_GAME
 	wsc.bufIdx.Store(0)
 
@@ -202,8 +230,23 @@ func (s *WsServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	wsc.h = nil
 	wsc.mode = MODE_NONE
 
+	loopCnt := wsc.completeRecvQ.GetCount()
+	clearMsg := []byte{}
+	dummy := &ws.Frame{}
+	for i := int32(0); i < loopCnt; i++ {
+		wsc.completeRecvQ.Dequeue(&clearMsg)
+	}
+	loopCnt = wsc.sendQ.GetCount()
+	for i := int32(0); i < loopCnt; i++ {
+		wsc.sendQ.Dequeue(&dummy)
+	}
+
 	s.idx.Push(wsc.idx)
 	return
+}
+
+func (s *WsServer) SendPacket(idx int32, fr *ws.Frame) {
+	s.sessionList[idx].sendQ.Enqueue(fr)
 }
 
 func generateAcceptKey(secWebSocketKey string) string {

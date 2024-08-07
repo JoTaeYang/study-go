@@ -20,11 +20,13 @@ const (
 type WebSocketConn struct {
 	gnet.Conn
 	completeRecvQ *queue.Queue[[]byte]
+	sendQ         *queue.Queue[*ws.Frame]
 	h             *ws.Frame
 	Upgraded      bool
 	idx           int32
 	mode          SESSION_MODE
 	bufIdx        atomic.Int32
+	sendFlag      atomic.Int32
 }
 
 func (wsc *WebSocketConn) makeWriteHeader(h ws.Header) []byte {

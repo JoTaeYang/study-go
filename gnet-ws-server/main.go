@@ -22,6 +22,7 @@ func main() {
 
 	ws.InitServer(1000)
 	go ws.GameGo()
+	go ws.SendGo()
 	proc.InitMsgProc(ws)
 
 	log.Fatal(gnet.Serve(ws, "tcp://:30000", gnet.WithMulticore(true), gnet.WithNumEventLoop(4)))
