@@ -81,7 +81,7 @@ func (s *WsServer) SendGo() {
 						loopCnt = 100
 					}
 
-					msgBuf := make([]byte, 1024)
+					msgBuf := make([]byte, 0, 1024)
 					for i := int32(0); i < loopCnt; i++ {
 						msg := &ws.Frame{}
 						v.sendQ.Dequeue(&msg)
