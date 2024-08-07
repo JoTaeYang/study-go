@@ -7,10 +7,12 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/JoTaeYang/study-go/packet"
 	"github.com/JoTaeYang/study-go/packet/stgo"
 	"github.com/JoTaeYang/study-go/pkg/lockfree/lfstack"
+	"github.com/JoTaeYang/study-go/pkg/lockfree/queue"
 	"github.com/gobwas/ws"
 	"github.com/panjf2000/gnet"
 )
@@ -52,13 +54,14 @@ const (
 @params poolIdxLength 세션 인덱스 보관 stack 의 사이즈
 */
 func (s *WsServer) InitServer(poolIdxLength int32) {
-	s.idx = &lfstack.Stack[int32]{}
+	s.idx = lfstack.NewStack[int32]()
 	s.sessionList = make([]*WebSocketConn, poolIdxLength)
 	for i := int32(0); i < poolIdxLength; i++ {
 		s.idx.Push(i)
 
 		s.sessionList[i] = &WebSocketConn{
-			buffer: make([][]byte, 1024),
+			mode:          MODE_NONE,
+			completeRecvQ: queue.NewQueue[[]byte](),
 		}
 	}
 }
@@ -71,12 +74,22 @@ func (s *WsServer) GameGo() {
 	// goroutine stop 처리 추가
 	for {
 		for _, v := range s.sessionList {
-			for i := 0; i < 100; i++ {
-				s.msgFroc(v.idx, v.buffer[i])
+			if v.mode == MODE_GAME {
+				loopCnt := v.completeRecvQ.GetCount()
+				if loopCnt > 0 {
+					if loopCnt > 200 {
+						loopCnt = 100
+					}
+					for i := int32(0); i < loopCnt; i++ {
+						msg := make([]byte, 0, 10)
+						v.completeRecvQ.Dequeue(&msg)
+						s.msgFroc(v.idx, msg)
+					}
+				}
 			}
 		}
+		time.Sleep(time.Microsecond * 5)
 	}
-
 }
 
 func (s *WsServer) upgrade(wsc *WebSocketConn, br *bufio.Reader, action *gnet.Action) (out *bytes.Buffer) {
@@ -124,7 +137,8 @@ func (s *WsServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	wsc := s.sessionList[idx]
 	wsc.Conn = c
 	wsc.idx = idx
-	wsc.buffer = wsc.buffer[:0]
+	wsc.completeRecvQ = queue.NewQueue[[]byte]()
+	wsc.mode = MODE_GAME
 	wsc.bufIdx.Store(0)
 
 	c.SetContext(wsc)
@@ -160,12 +174,7 @@ func (s *WsServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Act
 			return
 		}
 
-		bufIdx := wsc.bufIdx.Load()
-		for {
-			if wsc.bufIdx.CompareAndSwap(bufIdx, bufIdx+1) {
-				wsc.buffer[bufIdx] = append(wsc.buffer[bufIdx], msg...)
-			}
-		}
+		wsc.completeRecvQ.Enqueue(msg)
 
 		// fr, err := s.msgFroc(wsc, msg)
 		// if err != nil {
@@ -191,6 +200,7 @@ func (s *WsServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	wsc.Conn = nil
 	wsc.Upgraded = false
 	wsc.h = nil
+	wsc.mode = MODE_NONE
 
 	s.idx.Push(wsc.idx)
 	return

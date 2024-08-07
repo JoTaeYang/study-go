@@ -27,11 +27,6 @@ func NewQueue[T any]() *Queue[T] {
 	dummyNode := &Node[T]{
 		next: nil,
 	}
-
-	// head :=
-
-	// tail :=
-
 	q.count.Store(0)
 	q.unique.Store(0)
 	q.head.Store(&TopNode[T]{
@@ -44,6 +39,10 @@ func NewQueue[T any]() *Queue[T] {
 	})
 
 	return &q
+}
+
+func (q *Queue[T]) GetCount() int32 {
+	return q.count.Load()
 }
 
 func (q *Queue[T]) Enqueue(val T) {

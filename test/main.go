@@ -27,15 +27,10 @@ var q *queue.Queue[*Player]
 func FuncTestRoutineQ() {
 	pList := make([]*Player, ARRAY_CNT, ARRAY_CNT)
 
-	var check bool
 	var i int
 	for {
 		for i = 0; i < ARRAY_CNT; i++ {
 			q.Dequeue(&pList[i])
-			if !check {
-				log.Println("Stack Is Empty")
-				panic("Stack Is Empty")
-			}
 
 			if pList[i] == nil {
 				log.Println("Player is Nil")
@@ -166,6 +161,7 @@ func FuncTestRoutine() {
 	}
 }
 func main() {
+	s = lfstack.NewStack[*Player]()
 	q = queue.NewQueue[*Player]()
 	pList := make([]*Player, POOL_COUNT, POOL_COUNT)
 	for i := 0; i < POOL_COUNT; i++ {
@@ -179,6 +175,9 @@ func main() {
 	for i := 0; i < POOL_COUNT; i++ {
 		q.Enqueue(pList[i])
 	}
+
+	player := &Player{}
+	q.Dequeue(&player)
 
 	for i := 0; i < GO_CNT; i++ {
 		go FuncTestRoutineQ()
