@@ -99,6 +99,70 @@ func (PacketID_T) EnumDescriptor() ([]byte, []int) {
 	return file_packet_proto_rawDescGZIP(), []int{0, 0}
 }
 
+type MoveDir_T int32
+
+const (
+	MoveDir_LL MoveDir_T = 0
+	MoveDir_LU MoveDir_T = 1
+	MoveDir_UU MoveDir_T = 2
+	MoveDir_RU MoveDir_T = 3
+	MoveDir_RR MoveDir_T = 4
+	MoveDir_RD MoveDir_T = 5
+	MoveDir_DD MoveDir_T = 6
+	MoveDir_LD MoveDir_T = 7
+)
+
+// Enum value maps for MoveDir_T.
+var (
+	MoveDir_T_name = map[int32]string{
+		0: "LL",
+		1: "LU",
+		2: "UU",
+		3: "RU",
+		4: "RR",
+		5: "RD",
+		6: "DD",
+		7: "LD",
+	}
+	MoveDir_T_value = map[string]int32{
+		"LL": 0,
+		"LU": 1,
+		"UU": 2,
+		"RU": 3,
+		"RR": 4,
+		"RD": 5,
+		"DD": 6,
+		"LD": 7,
+	}
+)
+
+func (x MoveDir_T) Enum() *MoveDir_T {
+	p := new(MoveDir_T)
+	*p = x
+	return p
+}
+
+func (x MoveDir_T) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (MoveDir_T) Descriptor() protoreflect.EnumDescriptor {
+	return file_packet_proto_enumTypes[1].Descriptor()
+}
+
+func (MoveDir_T) Type() protoreflect.EnumType {
+	return &file_packet_proto_enumTypes[1]
+}
+
+func (x MoveDir_T) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use MoveDir_T.Descriptor instead.
+func (MoveDir_T) EnumDescriptor() ([]byte, []int) {
+	return file_packet_proto_rawDescGZIP(), []int{1, 0}
+}
+
 type PacketID struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -137,6 +201,44 @@ func (*PacketID) Descriptor() ([]byte, []int) {
 	return file_packet_proto_rawDescGZIP(), []int{0}
 }
 
+type MoveDir struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *MoveDir) Reset() {
+	*x = MoveDir{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_packet_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MoveDir) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoveDir) ProtoMessage() {}
+
+func (x *MoveDir) ProtoReflect() protoreflect.Message {
+	mi := &file_packet_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoveDir.ProtoReflect.Descriptor instead.
+func (*MoveDir) Descriptor() ([]byte, []int) {
+	return file_packet_proto_rawDescGZIP(), []int{1}
+}
+
 var File_packet_proto protoreflect.FileDescriptor
 
 var file_packet_proto_rawDesc = []byte{
@@ -156,7 +258,12 @@ var file_packet_proto_rawDesc = []byte{
 	0x54, 0x45, 0x52, 0x10, 0x09, 0x12, 0x11, 0x0a, 0x0d, 0x43, 0x53, 0x5f, 0x52, 0x4f, 0x4f, 0x4d,
 	0x5f, 0x45, 0x4e, 0x54, 0x45, 0x52, 0x10, 0x0a, 0x12, 0x0c, 0x0a, 0x07, 0x53, 0x43, 0x5f, 0x45,
 	0x43, 0x48, 0x4f, 0x10, 0xe8, 0x07, 0x12, 0x0c, 0x0a, 0x07, 0x43, 0x53, 0x5f, 0x45, 0x43, 0x48,
-	0x4f, 0x10, 0xe9, 0x07, 0x42, 0x0d, 0x50, 0x01, 0x5a, 0x09, 0x2e, 0x2f, 0x66, 0x69, 0x67, 0x68,
+	0x4f, 0x10, 0xe9, 0x07, 0x22, 0x4e, 0x0a, 0x07, 0x4d, 0x6f, 0x76, 0x65, 0x44, 0x69, 0x72, 0x22,
+	0x43, 0x0a, 0x01, 0x54, 0x12, 0x06, 0x0a, 0x02, 0x4c, 0x4c, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02,
+	0x4c, 0x55, 0x10, 0x01, 0x12, 0x06, 0x0a, 0x02, 0x55, 0x55, 0x10, 0x02, 0x12, 0x06, 0x0a, 0x02,
+	0x52, 0x55, 0x10, 0x03, 0x12, 0x06, 0x0a, 0x02, 0x52, 0x52, 0x10, 0x04, 0x12, 0x06, 0x0a, 0x02,
+	0x52, 0x44, 0x10, 0x05, 0x12, 0x06, 0x0a, 0x02, 0x44, 0x44, 0x10, 0x06, 0x12, 0x06, 0x0a, 0x02,
+	0x4c, 0x44, 0x10, 0x07, 0x42, 0x0d, 0x50, 0x01, 0x5a, 0x09, 0x2e, 0x2f, 0x66, 0x69, 0x67, 0x68,
 	0x74, 0x65, 0x72, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
@@ -172,11 +279,13 @@ func file_packet_proto_rawDescGZIP() []byte {
 	return file_packet_proto_rawDescData
 }
 
-var file_packet_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_packet_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_packet_proto_goTypes = []interface{}{
 	(PacketID_T)(0),  // 0: fighter.PacketID.T
-	(*PacketID)(nil), // 1: fighter.PacketID
+	(MoveDir_T)(0),   // 1: fighter.MoveDir.T
+	(*PacketID)(nil), // 2: fighter.PacketID
+	(*MoveDir)(nil),  // 3: fighter.MoveDir
 }
 var file_packet_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -204,14 +313,26 @@ func file_packet_proto_init() {
 				return nil
 			}
 		}
+		file_packet_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MoveDir); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_packet_proto_rawDesc,
-			NumEnums:      1,
-			NumMessages:   1,
+			NumEnums:      2,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

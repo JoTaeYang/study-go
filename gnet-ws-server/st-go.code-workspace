@@ -1,12 +1,6 @@
 {
 	"folders": [
 		{
-			"path": "."
-		},
-		{
-			"path": "../ws-client"
-		},
-		{
 			"path": "../packet"
 		},
 		{
@@ -16,7 +10,7 @@
 			"path": "../test"
 		},
 		{
-			"path": "../platform"
+			"path": "../game-server"
 		}
 	]
 }

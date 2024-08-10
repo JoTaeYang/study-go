@@ -1,16 +1,20 @@
 package socket
 
 import (
-	"crypto/sha1"
-	"encoding/base64"
+	"bytes"
 	"log"
 	"time"
 
 	"github.com/JoTaeYang/study-go/pkg/lock/queue"
-	"github.com/JoTaeYang/study-go/pkg/lockfree/lfstack"
+	"github.com/JoTaeYang/study-go/pkg/lock/stack"
+	"github.com/JoTaeYang/study-go/pkg/ringbuffer"
 	"github.com/gobwas/ws"
 	"github.com/panjf2000/gnet"
 )
+
+type Handler interface {
+	OnClientJoin(idx int32)
+}
 
 type Header struct {
 	code  byte
@@ -21,9 +25,10 @@ type Header struct {
 type Server struct {
 	*gnet.EventServer
 
-	idx         *lfstack.Stack[int32]
+	idx         *stack.Stack[int32]
 	sessionList []*Session
 
+	handler Handler
 	msgFroc func(idx int32, msg []byte) (*ws.Frame, error)
 }
 
@@ -55,17 +60,22 @@ const (
 @params poolIdxLength 세션 인덱스 보관 stack 의 사이즈
 */
 func (s *Server) InitServer(poolIdxLength int32) {
-	s.idx = lfstack.NewStack[int32]()
+	s.idx = stack.NewStack[int32]()
 	s.sessionList = make([]*Session, poolIdxLength)
 	for i := int32(0); i < poolIdxLength; i++ {
 		s.idx.Push(i)
 
 		s.sessionList[i] = &Session{
 			mode:          MODE_NONE,
+			recvBuffer:    ringbuffer.NewBuffer(2048),
 			completeRecvQ: queue.NewQueue[[]byte](),
-			sendQ:         queue.NewQueue[*ws.Frame](),
+			sendQ:         queue.NewQueue[*bytes.Buffer](),
 		}
 	}
+}
+
+func (s *Server) SetHandler(handler Handler) {
+	s.handler = handler
 }
 
 func (s *Server) SetMsgProc(proc func(idx int32, msg []byte) (*ws.Frame, error)) {
@@ -81,8 +91,16 @@ func (s *Server) SendGo() {
 					if loopCnt > 200 {
 						loopCnt = 100
 					}
-
-					v.AsyncWrite(msgBuf)
+					msgBuffer := make([]byte, 0, 1024)
+					for i := int32(0); i < loopCnt; i++ {
+						buf := v.sendQ.Dequeue()
+						if buf == nil {
+							v.Conn.Close()
+							break
+						}
+						msgBuffer = append(msgBuffer, buf.Bytes()...)
+					}
+					v.AsyncWrite(msgBuffer)
 				}
 			}
 		}
@@ -114,7 +132,7 @@ func (s *Server) GameGo() {
 }
 
 func (s *Server) OnInitComplete(srv gnet.Server) (action gnet.Action) {
-	log.Printf("WebSocket server started on %s\n", srv.Addr.String())
+	log.Printf("Socket server started on %s\n", srv.Addr.String())
 	return
 }
 
@@ -129,26 +147,50 @@ func (s *Server) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	wsc.idx = idx
 	wsc.mode = MODE_GAME
 
+	s.handler.OnClientJoin(idx)
+
 	c.SetContext(wsc)
 	return
 }
+
+/*
+내가 Recv 중에 또 Recv가 들어올 수 있나?
+*/
 
 func (s *Server) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
 	wsc := c.Context().(*Session)
 
 	transferred := len(frame)
-	
+
+	wsc.recvBuffer.Enqueue(&frame, int32(transferred))
+
 	tmpFrame := make([]byte, transferred)
 
 	copy(tmpFrame, frame)
-
+	var outSize int32
+	var err error
 	for {
 		if transferred <= 0 {
 			break
 		}
-		msg := &Header{}
+		msg := make([]byte, 0, 15)
+		outSize, err = wsc.recvBuffer.Peek(&msg, 3)
+		if err != nil {
+			break
+		}
+
+		if msg[0] != 0x89 {
+			break
+		}
+
+		if byte(wsc.recvBuffer.GetUseSize()) < msg[1]+3 {
+			break
+		}
+
+		outSize, _ = wsc.recvBuffer.Dequeue(&msg, int32(msg[1]+3))
 
 		wsc.completeRecvQ.Enqueue(msg)
+		transferred -= int(outSize)
 	}
 
 	return
@@ -156,11 +198,12 @@ func (s *Server) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Actio
 
 func (s *Server) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	wsc := c.Context().(*Session)
-	log.Printf("WebSocket connection closed from %s\n", c.RemoteAddr().String())
+	log.Printf("Socket connection closed from %s\n", c.RemoteAddr().String())
 
 	wsc.Conn = nil
 	wsc.mode = MODE_NONE
 
+	wsc.recvBuffer.Clear()
 	loopCnt := wsc.completeRecvQ.GetCount()
 
 	for i := int32(0); i < loopCnt; i++ {
@@ -175,13 +218,6 @@ func (s *Server) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	return
 }
 
-func (s *Server) SendPacket(idx int32, fr *ws.Frame) {
-	s.sessionList[idx].sendQ.Enqueue(fr)
-}
-
-func generateAcceptKey(secWebSocketKey string) string {
-	const magicString = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-	hash := sha1.New()
-	hash.Write([]byte(secWebSocketKey + magicString))
-	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
+func (s *Server) SendPacket(idx int32, buffer *bytes.Buffer) {
+	s.sessionList[idx].sendQ.Enqueue(buffer)
 }

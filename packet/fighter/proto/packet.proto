@@ -29,3 +29,15 @@ message PacketID {
     }
 }
 
+message MoveDir {
+    enum T {
+        LL = 0;
+        LU = 1;
+        UU = 2;
+        RU = 3;
+        RR = 4;
+        RD = 5;
+        DD = 6;
+        LD = 7;
+    }
+}

@@ -57,6 +57,9 @@ func (q *Queue[T]) Dequeue() T {
 
 	outValue := q.head.value
 	q.head = q.head.next
+	if q.head == nil {
+		q.tail = nil
+	}
 
 	return outValue
 }

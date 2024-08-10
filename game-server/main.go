@@ -3,9 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/JoTaeYang/study-go/gnet-ws-server/proc"
-	"github.com/JoTaeYang/study-go/gnet-ws-server/server"
-	"github.com/JoTaeYang/study-go/pkg/yws"
+	"github.com/JoTaeYang/study-go/game-server/server"
 	"github.com/panjf2000/gnet"
 )
 
@@ -16,14 +14,12 @@ func main() {
 		return
 	}
 
-	ws := &server.GnetWsServer{
-		&yws.WsServer{},
-	}
+	s := server.NewGameServer()
 
-	ws.InitServer(1000)
-	go ws.GameGo()
-	go ws.SendGo()
-	proc.InitMsgProc(ws)
+	s.InitServer(1000)
+	//go s.GameGo()
+	go s.SendGo()
+	server.InitMsgProc(s)
 
-	log.Fatal(gnet.Serve(ws, "tcp://:30000", gnet.WithMulticore(true), gnet.WithNumEventLoop(4)))
+	log.Fatal(gnet.Serve(s, "tcp://:20000", gnet.WithMulticore(true), gnet.WithNumEventLoop(4)))
 }

@@ -4,17 +4,16 @@ import (
 	"errors"
 )
 
-type RingBuffer struct {
+type Buffer struct {
 	frontPos int32
 	rearPos  int32
 
 	defaultSize int32
-
-	Buffer []byte
+	Buffer      []byte
 }
 
-func NewRingBuffer(size int32) *RingBuffer {
-	return &RingBuffer{
+func NewBuffer(size int32) *Buffer {
+	return &Buffer{
 		frontPos:    0,
 		rearPos:     0,
 		Buffer:      make([]byte, size, size),
@@ -22,7 +21,7 @@ func NewRingBuffer(size int32) *RingBuffer {
 	}
 }
 
-func (c *RingBuffer) Enqueue(data *[]byte, size int32) int32 {
+func (c *Buffer) Enqueue(data *[]byte, size int32) int32 {
 	var tmpRearPos int32 = c.rearPos
 	var tmpFrontPos int32 = c.frontPos
 	var ret_val int32 = 0
@@ -42,7 +41,7 @@ func (c *RingBuffer) Enqueue(data *[]byte, size int32) int32 {
 	return ret_val
 }
 
-func (c *RingBuffer) Dequeue(data *[]byte, size int32) (int32, error) {
+func (c *Buffer) Dequeue(data *[]byte, size int32) (int32, error) {
 	var tmpRearPos int32 = c.rearPos
 	var tmpFrontPos int32 = c.frontPos
 	var orgFrontPos int32 = c.frontPos
@@ -78,7 +77,7 @@ func (c *RingBuffer) Dequeue(data *[]byte, size int32) (int32, error) {
 	return retCount, nil
 }
 
-func (c *RingBuffer) Peek(data *[]byte, size int32) (int32, error) {
+func (c *Buffer) Peek(data *[]byte, size int32) (int32, error) {
 	var tmpRearPos int32 = c.rearPos
 	var tmpFrontPos int32 = c.frontPos
 	var orgFrontPos int32 = c.frontPos
@@ -113,7 +112,7 @@ func (c *RingBuffer) Peek(data *[]byte, size int32) (int32, error) {
 	return retCount, nil
 }
 
-func (c *RingBuffer) DirectDequeueSize() int32 {
+func (c *Buffer) DirectDequeueSize() int32 {
 	var tmpRearPos int32 = c.rearPos
 	var tmpFrontPos int32 = c.frontPos
 
@@ -124,19 +123,31 @@ func (c *RingBuffer) DirectDequeueSize() int32 {
 	}
 }
 
-func (c *RingBuffer) GetRearPos() []byte {
+/*
+Dequeue 할 수 있는 사이즈
+*/
+func (c *Buffer) GetUseSize() int32 {
+	tmpRear := c.rearPos
+	tmpFront := c.frontPos
+	if tmpRear >= tmpFront {
+		return tmpRear - tmpFront
+	}
+	return (c.defaultSize - tmpFront) - tmpRear
+}
+
+func (c *Buffer) GetRearPos() []byte {
 	return c.Buffer[c.rearPos:]
 }
 
-func (c *RingBuffer) GetFrontPos() []byte {
+func (c *Buffer) GetFrontPos() []byte {
 	return c.Buffer[c.frontPos:]
 }
 
-func (c *RingBuffer) MoveRearPos(move int32) {
+func (c *Buffer) MoveRearPos(move int32) {
 	c.rearPos += move
 }
 
-func (c *RingBuffer) Clear() {
+func (c *Buffer) Clear() {
 	c.frontPos = 0
 	c.rearPos = 0
 }
