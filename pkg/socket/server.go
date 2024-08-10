@@ -1,19 +1,22 @@
 package socket
 
 import (
-	"bytes"
 	"crypto/sha1"
 	"encoding/base64"
 	"log"
 	"time"
 
-	"github.com/JoTaeYang/study-go/packet"
-	"github.com/JoTaeYang/study-go/packet/stgo"
 	"github.com/JoTaeYang/study-go/pkg/lock/queue"
 	"github.com/JoTaeYang/study-go/pkg/lockfree/lfstack"
 	"github.com/gobwas/ws"
 	"github.com/panjf2000/gnet"
 )
+
+type Header struct {
+	code  byte
+	size  byte
+	hType byte
+}
 
 type Server struct {
 	*gnet.EventServer
@@ -133,22 +136,21 @@ func (s *Server) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 func (s *Server) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
 	wsc := c.Context().(*Session)
 
-	buf := bytes.NewBuffer(frame)
+	transferred := len(frame)
+	
+	tmpFrame := make([]byte, transferred)
 
-	msg := wsc.ReadBytes(buf)
+	copy(tmpFrame, frame)
 
-	if msg != nil {
-		header := &stgo.PacketHeader{}
-
-		err := packet.ByteToHeader(&msg, header)
-		if err != nil {
-			action = gnet.Close
-			return
+	for {
+		if transferred <= 0 {
+			break
 		}
+		msg := &Header{}
 
 		wsc.completeRecvQ.Enqueue(msg)
-
 	}
+
 	return
 }
 

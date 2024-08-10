@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/JoTaeYang/study-go/gnet-ws-server v0.0.0-20240807143943-39a710e969ac
-	github.com/JoTaeYang/study-go/pkg v0.0.0-20240807143943-39a710e969ac
+	github.com/JoTaeYang/study-go/pkg v0.0.0-20240810073922-afba93c13e1a
 	github.com/panjf2000/gnet v1.6.7
 	google.golang.org/protobuf v1.34.2
 )

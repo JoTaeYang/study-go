@@ -17,6 +17,7 @@ const (
 
 type Session struct {
 	gnet.Conn
+	recvBuffer    *RingBuffer
 	completeRecvQ *queue.Queue[[]byte]
 	sendQ         *queue.Queue[*ws.Frame]
 	idx           int32

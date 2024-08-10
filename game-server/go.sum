@@ -3,8 +3,8 @@ github.com/JoTaeYang/study-go/gnet-ws-server v0.0.0-20240807143943-39a710e969ac 
 github.com/JoTaeYang/study-go/gnet-ws-server v0.0.0-20240807143943-39a710e969ac/go.mod h1:BZk+ymJbkm+uq/9uFgV5KYgXQIn5LlyhZjMVRU0owF8=
 github.com/JoTaeYang/study-go/packet v0.0.0-20240715132117-84eace1d721a h1:SFpog7QtURfGqeFs7MGaPJwHsLOu9SyIus4ALAMEXD8=
 github.com/JoTaeYang/study-go/packet v0.0.0-20240715132117-84eace1d721a/go.mod h1:A0krCldpjWqp5s5rDZqW1RTpvrfCyKPNyWkBAWn9iXA=
-github.com/JoTaeYang/study-go/pkg v0.0.0-20240807143943-39a710e969ac h1:guOEwKnJCAT7DyWGR8/SA744g28L0Yw3i7Flsa1ZByg=
-github.com/JoTaeYang/study-go/pkg v0.0.0-20240807143943-39a710e969ac/go.mod h1:23qZKfy2AMoK21uAYCJ1dnym3FhkTIFaJWp9MrymyWM=
+github.com/JoTaeYang/study-go/pkg v0.0.0-20240810073922-afba93c13e1a h1:qyYzXVAlUH8gh3aA7Orhl6h/6ubTva1sVlKNIzofI14=
+github.com/JoTaeYang/study-go/pkg v0.0.0-20240810073922-afba93c13e1a/go.mod h1:23qZKfy2AMoK21uAYCJ1dnym3FhkTIFaJWp9MrymyWM=
 github.com/aws/aws-sdk-go-v2 v1.30.1 h1:4y/5Dvfrhd1MxRDD77SrfsDaj8kUkkljU7XE83NPV+o=
 github.com/aws/aws-sdk-go-v2 v1.30.1/go.mod h1:nIQjQVp5sfpQcTc9mPSr1B0PaWK5ByX9MOoDadSN4lc=
 github.com/aws/aws-sdk-go-v2/config v1.27.24 h1:NM9XicZ5o1CBU/MZaHwFtimRpWx9ohAUAqkG6AqSqPo=
