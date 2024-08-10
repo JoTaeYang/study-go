@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option go_package = "./fighter";
+option java_multiple_files = true;
+
+package fighter;
+
+message PacketID {
+    enum T {
+        NONE = 0;
+
+        SC_CONNECT = 1;
+        CS_CONNECT = 2;
+
+        SC_CHAT_USER_MSG = 3;
+        CS_CHAT_USER_MSG = 4;
+
+        SC_PING = 5;
+        CS_PONG = 6;
+
+        SC_ROOM_CREATE = 7;
+        CS_ROOM_CREATE = 8;
+
+        SC_ROOM_ENTER = 9;
+        CS_ROOM_ENTER = 10;
+
+        SC_ECHO = 1000;
+        CS_ECHO = 1001;
+    }
+}
+
